@@ -3,35 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POPCAT RENO 11 EDITION</title>
+    <title>POPCAT ACHI EDITION</title>
     <style>
-        body { margin: 0; background-color: black; color: white; font-family: sans-serif; 
-               display: flex; flex-direction: column; align-items: center; justify-content: center; 
-               height: 100vh; overflow: hidden; user-select: none; transition: background 0.2s; }
-        #score { font-size: 80px; font-weight: bold; margin-bottom: 20px; z-index: 10; }
-        #cat-container { position: relative; width: 90%; max-width: 500px; }
-        img { width: 100%; display: none; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; background-color: black; color: white; font-family: 'Arial', sans-serif; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; overflow: hidden; user-select: none; transition: background 0.2s;
+            -webkit-touch-callout: none;
+        }
+        #score { 
+            font-size: clamp(60px, 20vw, 120px); font-weight: bold; 
+            margin-bottom: 10px; z-index: 10; text-shadow: 4px 4px 0px #000;
+        }
+        #cat-container { 
+            position: relative; width: 100%; max-width: 600px; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        img { 
+            width: 100%; height: auto; display: none; 
+            -webkit-tap-highlight-color: transparent;
+        }
         img.active { display: block; }
-        .red-eye { filter: sepia(100%) saturate(500%) hue-rotate(-50deg); }
-        #warning { color: yellow; font-size: 24px; font-weight: bold; display: none; position: absolute; top: 50%; width: 100%; text-align: center; }
-        #timer { color: red; font-size: 40px; font-weight: bold; display: none; z-index: 20; }
+        
+        /* Effect ตาแดงตอนกดเร็วเกิน */
+        .red-eye { filter: sepia(100%) saturate(1000%) hue-rotate(-50deg); }
+        
+        #warning { 
+            color: #ff0000; font-size: 28px; font-weight: bold; display: none; 
+            position: absolute; top: 50%; width: 100%; text-align: center;
+            background: rgba(0,0,0,0.7); padding: 10px 0; z-index: 15;
+        }
+        #timer { 
+            color: #ff0000; font-size: 50px; font-weight: bold; display: none; 
+            z-index: 20; position: absolute; bottom: 10%; text-shadow: 2px 2px 10px #000;
+        }
     </style>
 </head>
 <body id="body">
+
     <div id="score">0</div>
+    
     <div id="cat-container">
         <h1 id="warning">TOO FAST! CALM DOWN</h1>
         <h1 id="timer">FREE IN: 9s</h1>
+        
         <img id="cat-close" src="popcat_close.png" class="active">
         <img id="cat-open" src="popcat_open.png">
         <img id="rick" src="ge.gif">
     </div>
-    <audio id="snd-pop" src="pop.mp3"></audio>
-    <audio id="snd-rick" src="Rick-Roll-Sound-E..."></audio> <script>
-        let score = localStorage.getItem('popcat_score') || 0;
+
+    <audio id="snd-pop" src="pop.mp3" preload="auto"></audio>
+    <audio id="snd-rick" src="rick.mp3" preload="auto"></audio>
+
+    <script>
+        // --- ระบบบันทึกคะแนน ---
+        let score = parseInt(localStorage.getItem('popcat_score')) || 0;
         let rickTimer = null;
         let clickHistory = [];
-        const MAX_CPS = 15;
+        const MAX_CPS = 25; // เพิ่มความเร็วให้แล้ว กดรัวได้สะใจขึ้น
         let isRedEye = false;
 
         const scoreEl = document.getElementById('score');
@@ -46,17 +75,12 @@
 
         scoreEl.innerText = score;
 
-        function updateScore(n) {
-            score = n;
-            scoreEl.innerText = score;
-            localStorage.setItem('popcat_score', score);
-        }
-
         function handlePop(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             const now = Date.now();
-            clickHistory = clickHistory.filter(t => now - t < 1000);
             
+            // --- ระบบเช็คความเร็ว (Anti-Cheat) ---
+            clickHistory = clickHistory.filter(t => now - t < 1000);
             if (clickHistory.length > MAX_CPS) {
                 isRedEye = true;
                 body.style.background = "#440000";
@@ -68,20 +92,31 @@
             
             if (rickTimer || isRedEye) return;
 
+            // --- ขั้นตอนการ Pop ---
             clickHistory.push(now);
-            updateScore(parseInt(score) + 1);
+            score++;
+            scoreEl.innerText = score;
+            localStorage.setItem('popcat_score', score);
+            
             catClose.classList.remove('active');
             catOpen.classList.add('active');
+            
+            // เล่นเสียง Pop
             sndPop.currentTime = 0;
-            sndPop.play();
+            sndPop.play().catch(() => {});
 
-            if (score == 200) startRickroll();
+            // --- เช็คพิกัด Rickroll ---
+            if (score === 200) {
+                startRickroll();
+            }
         }
 
         function handleRelease() {
             if (rickTimer) return;
             catOpen.classList.remove('active');
             catClose.classList.add('active');
+            
+            // ปลดล็อคตาแดง (ถ้าหยุดกด 0.5 วิ)
             setTimeout(() => {
                 isRedEye = false;
                 body.style.background = "black";
@@ -97,14 +132,23 @@
             catOpen.style.display = "none";
             rickImg.style.display = "block";
             timerEl.style.display = "block";
-            sndRick.play();
+            
+            sndRick.currentTime = 0;
+            sndRick.play().catch(() => {
+                console.log("กรุณากดที่หน้าจอก่อนเพื่อให้เสียงเล่น");
+            });
+
             let interval = setInterval(() => {
                 rickTimer--;
                 timerEl.innerText = `FREE IN: ${rickTimer}s`;
                 if (rickTimer <= 0) {
                     clearInterval(interval);
                     rickTimer = null;
-                    updateScore(201);
+                    // ข้ามแต้ม 200 ไปเป็น 201 ทันที
+                    score = 201;
+                    scoreEl.innerText = score;
+                    localStorage.setItem('popcat_score', score);
+                    
                     rickImg.style.display = "none";
                     catClose.style.display = "block";
                     timerEl.style.display = "none";
@@ -113,10 +157,13 @@
             }, 1000);
         }
 
+        // รองรับทั้งนิ้วจิ้มและเม้าส์
         window.addEventListener('mousedown', handlePop);
         window.addEventListener('mouseup', handleRelease);
-        window.addEventListener('touchstart', handlePop);
-        window.addEventListener('touchend', handleRelease);
+        window.addEventListener('touchstart', handlePop, {passive: false});
+        window.addEventListener('touchend', handleRelease, {passive: false});
+
     </script>
 </body>
 </html>
+
