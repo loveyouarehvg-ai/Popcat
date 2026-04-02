@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POPCAT ACHI EDITION</title>
+    <title>POPCAT ACHI HACK EDITION</title>
     <style>
         body { 
             margin: 0; background-color: black; color: white; font-family: 'Arial', sans-serif; 
@@ -19,24 +19,28 @@
             position: relative; width: 100%; max-width: 600px; 
             display: flex; justify-content: center; align-items: center;
         }
-        img { 
-            width: 100%; height: auto; display: none; 
-            -webkit-tap-highlight-color: transparent;
-        }
+        img { width: 100%; height: auto; display: none; -webkit-tap-highlight-color: transparent; }
         img.active { display: block; }
-        
-        /* Effect ตาแดงตอนกดเร็วเกิน */
         .red-eye { filter: sepia(100%) saturate(1000%) hue-rotate(-50deg); }
         
-        #warning { 
-            color: #ff0000; font-size: 28px; font-weight: bold; display: none; 
-            position: absolute; top: 50%; width: 100%; text-align: center;
-            background: rgba(0,0,0,0.7); padding: 10px 0; z-index: 15;
+        /* --- Hack Menu Style --- */
+        #hack-menu {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(20, 20, 20, 0.95); border: 2px solid #00ff00; padding: 20px;
+            border-radius: 15px; z-index: 100; min-width: 250px; text-align: center;
+            box-shadow: 0 0 20px #00ff00;
         }
-        #timer { 
-            color: #ff0000; font-size: 50px; font-weight: bold; display: none; 
-            z-index: 20; position: absolute; bottom: 10%; text-shadow: 2px 2px 10px #000;
+        #hack-menu h2 { color: #00ff00; margin-top: 0; }
+        .hack-btn {
+            background: #111; color: #00ff00; border: 1px solid #00ff00;
+            padding: 10px; margin: 5px; width: 100%; cursor: pointer; border-radius: 5px;
+            font-weight: bold; font-size: 16px;
         }
+        .hack-btn:active { background: #00ff00; color: #000; }
+        .close-hack { color: #ff0000; font-size: 12px; margin-top: 10px; cursor: pointer; }
+
+        #warning { color: #ff0000; font-size: 28px; font-weight: bold; display: none; position: absolute; top: 50%; width: 100%; text-align: center; background: rgba(0,0,0,0.7); padding: 10px 0; z-index: 15; }
+        #timer { color: #ff0000; font-size: 50px; font-weight: bold; display: none; z-index: 20; position: absolute; bottom: 10%; text-shadow: 2px 2px 10px #000; }
     </style>
 </head>
 <body id="body">
@@ -46,22 +50,30 @@
     <div id="cat-container">
         <h1 id="warning">TOO FAST! CALM DOWN</h1>
         <h1 id="timer">FREE IN: 9s</h1>
-        
         <img id="cat-close" src="popcat_close.png" class="active">
         <img id="cat-open" src="popcat_open.png">
         <img id="rick" src="ge.gif">
+    </div>
+
+    <div id="hack-menu">
+        <h2>ADMIN HACK</h2>
+        <button class="hack-btn" onclick="addScore(100)">+100 POINTS</button>
+        <button class="hack-btn" id="auto-btn" onclick="toggleAuto()">AUTO CLICK: OFF</button>
+        <button class="hack-btn" onclick="resetScore()">RESET ALL SCORE</button>
+        <div class="close-hack" onclick="closeMenu()">[ CLOSE MENU ]</div>
     </div>
 
     <audio id="snd-pop" src="pop.mp3" preload="auto"></audio>
     <audio id="snd-rick" src="rick.mp3" preload="auto"></audio>
 
     <script>
-        // --- ระบบบันทึกคะแนน ---
         let score = parseInt(localStorage.getItem('popcat_score')) || 0;
         let rickTimer = null;
         let clickHistory = [];
-        const MAX_CPS = 25; // เพิ่มความเร็วให้แล้ว กดรัวได้สะใจขึ้น
+        const MAX_CPS = 30; // กันตาแดงยากขึ้นหน่อย
         let isRedEye = false;
+        let isAuto = false;
+        let autoInterval = null;
 
         const scoreEl = document.getElementById('score');
         const catClose = document.getElementById('cat-close');
@@ -72,16 +84,61 @@
         const timerEl = document.getElementById('timer');
         const sndPop = document.getElementById('snd-pop');
         const sndRick = document.getElementById('snd-rick');
+        const hackMenu = document.getElementById('hack-menu');
 
         scoreEl.innerText = score;
 
+        // --- ระบบ Hack Functions ---
+        function addScore(n) {
+            score += n;
+            saveAndUI();
+            if(score >= 200 && score < 210) startRickroll();
+        }
+
+        function toggleAuto() {
+            isAuto = !isAuto;
+            const btn = document.getElementById('auto-btn');
+            if(isAuto) {
+                btn.innerText = "AUTO CLICK: ON";
+                autoInterval = setInterval(() => {
+                    handlePop();
+                    setTimeout(handleRelease, 50);
+                }, 100);
+            } else {
+                btn.innerText = "AUTO CLICK: OFF";
+                clearInterval(autoInterval);
+            }
+        }
+
+        function resetScore() {
+            if(confirm("ล้างแต้มทั้งหมดจริงดิ?")) {
+                score = 0;
+                saveAndUI();
+                closeMenu();
+            }
+        }
+
+        function closeMenu() { hackMenu.style.display = 'none'; }
+        function saveAndUI() {
+            scoreEl.innerText = score;
+            localStorage.setItem('popcat_score', score);
+        }
+
+        // --- ระบบ Pop ปกติ ---
         function handlePop(e) {
-            if (e) e.preventDefault();
+            if (e) {
+                e.preventDefault();
+                // เช็ค 6 นิ้วเพื่อเปิดเมนู Hack
+                if (e.touches && e.touches.length >= 6) {
+                    hackMenu.style.display = 'block';
+                    return;
+                }
+            }
+
             const now = Date.now();
-            
-            // --- ระบบเช็คความเร็ว (Anti-Cheat) ---
             clickHistory = clickHistory.filter(t => now - t < 1000);
-            if (clickHistory.length > MAX_CPS) {
+            
+            if (clickHistory.length > MAX_CPS && !isAuto) {
                 isRedEye = true;
                 body.style.background = "#440000";
                 warn.style.display = "block";
@@ -92,31 +149,22 @@
             
             if (rickTimer || isRedEye) return;
 
-            // --- ขั้นตอนการ Pop ---
             clickHistory.push(now);
             score++;
-            scoreEl.innerText = score;
-            localStorage.setItem('popcat_score', score);
+            saveAndUI();
             
             catClose.classList.remove('active');
             catOpen.classList.add('active');
-            
-            // เล่นเสียง Pop
             sndPop.currentTime = 0;
             sndPop.play().catch(() => {});
 
-            // --- เช็คพิกัด Rickroll ---
-            if (score === 200) {
-                startRickroll();
-            }
+            if (score === 200) startRickroll();
         }
 
         function handleRelease() {
             if (rickTimer) return;
             catOpen.classList.remove('active');
             catClose.classList.add('active');
-            
-            // ปลดล็อคตาแดง (ถ้าหยุดกด 0.5 วิ)
             setTimeout(() => {
                 isRedEye = false;
                 body.style.background = "black";
@@ -127,16 +175,14 @@
         }
 
         function startRickroll() {
+            if(isAuto) toggleAuto(); // ปิดออโต้ตอนโดนริค
             rickTimer = 9;
             catClose.style.display = "none";
             catOpen.style.display = "none";
             rickImg.style.display = "block";
             timerEl.style.display = "block";
-            
             sndRick.currentTime = 0;
-            sndRick.play().catch(() => {
-                console.log("กรุณากดที่หน้าจอก่อนเพื่อให้เสียงเล่น");
-            });
+            sndRick.play().catch(() => {});
 
             let interval = setInterval(() => {
                 rickTimer--;
@@ -144,11 +190,8 @@
                 if (rickTimer <= 0) {
                     clearInterval(interval);
                     rickTimer = null;
-                    // ข้ามแต้ม 200 ไปเป็น 201 ทันที
                     score = 201;
-                    scoreEl.innerText = score;
-                    localStorage.setItem('popcat_score', score);
-                    
+                    saveAndUI();
                     rickImg.style.display = "none";
                     catClose.style.display = "block";
                     timerEl.style.display = "none";
@@ -157,12 +200,10 @@
             }, 1000);
         }
 
-        // รองรับทั้งนิ้วจิ้มและเม้าส์
         window.addEventListener('mousedown', handlePop);
         window.addEventListener('mouseup', handleRelease);
         window.addEventListener('touchstart', handlePop, {passive: false});
         window.addEventListener('touchend', handleRelease, {passive: false});
-
     </script>
 </body>
 </html>
