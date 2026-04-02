@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POPCAT RENO 11 EDITION</title>
+    <style>
+        body { margin: 0; background-color: black; color: white; font-family: sans-serif; 
+               display: flex; flex-direction: column; align-items: center; justify-content: center; 
+               height: 100vh; overflow: hidden; user-select: none; transition: background 0.2s; }
+        #score { font-size: 80px; font-weight: bold; margin-bottom: 20px; z-index: 10; }
+        #cat-container { position: relative; width: 90%; max-width: 500px; }
+        img { width: 100%; display: none; -webkit-tap-highlight-color: transparent; }
+        img.active { display: block; }
+        .red-eye { filter: sepia(100%) saturate(500%) hue-rotate(-50deg); }
+        #warning { color: yellow; font-size: 24px; font-weight: bold; display: none; position: absolute; top: 50%; width: 100%; text-align: center; }
+        #timer { color: red; font-size: 40px; font-weight: bold; display: none; z-index: 20; }
+    </style>
+</head>
+<body id="body">
+    <div id="score">0</div>
+    <div id="cat-container">
+        <h1 id="warning">TOO FAST! CALM DOWN</h1>
+        <h1 id="timer">FREE IN: 9s</h1>
+        <img id="cat-close" src="popcat_close.png" class="active">
+        <img id="cat-open" src="popcat_open.png">
+        <img id="rick" src="ge.gif">
+    </div>
+    <audio id="snd-pop" src="pop.mp3"></audio>
+    <audio id="snd-rick" src="Rick-Roll-Sound-E..."></audio> <script>
+        let score = localStorage.getItem('popcat_score') || 0;
+        let rickTimer = null;
+        let clickHistory = [];
+        const MAX_CPS = 15;
+        let isRedEye = false;
+
+        const scoreEl = document.getElementById('score');
+        const catClose = document.getElementById('cat-close');
+        const catOpen = document.getElementById('cat-open');
+        const rickImg = document.getElementById('rick');
+        const body = document.getElementById('body');
+        const warn = document.getElementById('warning');
+        const timerEl = document.getElementById('timer');
+        const sndPop = document.getElementById('snd-pop');
+        const sndRick = document.getElementById('snd-rick');
+
+        scoreEl.innerText = score;
+
+        function updateScore(n) {
+            score = n;
+            scoreEl.innerText = score;
+            localStorage.setItem('popcat_score', score);
+        }
+
+        function handlePop(e) {
+            e.preventDefault();
+            const now = Date.now();
+            clickHistory = clickHistory.filter(t => now - t < 1000);
+            
+            if (clickHistory.length > MAX_CPS) {
+                isRedEye = true;
+                body.style.background = "#440000";
+                warn.style.display = "block";
+                catClose.classList.add('red-eye');
+                catOpen.classList.add('red-eye');
+                return;
+            }
+            
+            if (rickTimer || isRedEye) return;
+
+            clickHistory.push(now);
+            updateScore(parseInt(score) + 1);
+            catClose.classList.remove('active');
+            catOpen.classList.add('active');
+            sndPop.currentTime = 0;
+            sndPop.play();
+
+            if (score == 200) startRickroll();
+        }
+
+        function handleRelease() {
+            if (rickTimer) return;
+            catOpen.classList.remove('active');
+            catClose.classList.add('active');
+            setTimeout(() => {
+                isRedEye = false;
+                body.style.background = "black";
+                warn.style.display = "none";
+                catClose.classList.remove('red-eye');
+                catOpen.classList.remove('red-eye');
+            }, 500);
+        }
+
+        function startRickroll() {
+            rickTimer = 9;
+            catClose.style.display = "none";
+            catOpen.style.display = "none";
+            rickImg.style.display = "block";
+            timerEl.style.display = "block";
+            sndRick.play();
+            let interval = setInterval(() => {
+                rickTimer--;
+                timerEl.innerText = `FREE IN: ${rickTimer}s`;
+                if (rickTimer <= 0) {
+                    clearInterval(interval);
+                    rickTimer = null;
+                    updateScore(201);
+                    rickImg.style.display = "none";
+                    catClose.style.display = "block";
+                    timerEl.style.display = "none";
+                    sndRick.pause();
+                }
+            }, 1000);
+        }
+
+        window.addEventListener('mousedown', handlePop);
+        window.addEventListener('mouseup', handleRelease);
+        window.addEventListener('touchstart', handlePop);
+        window.addEventListener('touchend', handleRelease);
+    </script>
+</body>
+</html>
