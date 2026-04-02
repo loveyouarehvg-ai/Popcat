@@ -3,41 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>POPCAT ACHI HACK V2</title>
+    <title>POPCAT ACHI ULTIMATE HACK</title>
     <style>
         body { margin: 0; background-color: black; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; user-select: none; }
-        #score { font-size: 100px; font-weight: bold; margin-bottom: 10px; z-index: 10; cursor: pointer; transition: color 0.3s; }
-        #cat-container { position: relative; width: 100%; max-width: 600px; display: flex; justify-content: center; align-items: center; }
+        #score { font-size: 80px; font-weight: bold; z-index: 10; cursor: pointer; text-shadow: 0 0 20px #00ff00; }
+        #cat-container { position: relative; width: 100%; max-width: 500px; display: flex; justify-content: center; align-items: center; }
         img { width: 100%; height: auto; display: none; -webkit-tap-highlight-color: transparent; }
         img.active { display: block; }
         .red-eye { filter: sepia(100%) saturate(1000%) hue-rotate(-50deg); }
         
-        /* Hack Menu */
-        #hack-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 20, 20, 0.95); border: 2px solid #00ff00; padding: 20px; border-radius: 15px; z-index: 100; min-width: 250px; text-align: center; box-shadow: 0 0 20px #00ff00; }
-        .hack-btn { background: #111; color: #00ff00; border: 1px solid #00ff00; padding: 12px; margin: 8px 0; width: 100%; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        
-        #warning { color: #ff0000; font-size: 28px; font-weight: bold; display: none; position: absolute; top: 50%; width: 100%; text-align: center; z-index: 15; }
-        #timer { color: #ff0000; font-size: 50px; font-weight: bold; display: none; z-index: 20; position: absolute; bottom: 10%; }
+        /* Menu Hack Style */
+        #hack-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(10, 10, 10, 0.98); border: 2px solid #00ff00; padding: 20px; border-radius: 20px; z-index: 100; min-width: 280px; box-shadow: 0 0 30px #00ff00; }
+        .hack-btn { background: #111; color: #00ff00; border: 1px solid #00ff00; padding: 10px; margin: 5px 0; width: 100%; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .hack-btn:active { background: #00ff00; color: #000; }
+        #timer { color: #ff0000; font-size: 40px; font-weight: bold; display: none; position: absolute; bottom: 5%; }
     </style>
 </head>
 <body id="body">
 
-    <div id="score" oncontextmenu="return false;">0</div>
-    
+    <div id="score">0</div>
     <div id="cat-container">
-        <h1 id="warning">TOO FAST!</h1>
-        <h1 id="timer">FREE IN: 9s</h1>
         <img id="cat-close" src="popcat_close.png" class="active">
         <img id="cat-open" src="popcat_open.png">
         <img id="rick" src="ge.gif">
+        <h1 id="timer">FREE IN: 9s</h1>
     </div>
 
     <div id="hack-menu">
-        <h2 style="color:#00ff00">ACHI ADMIN</h2>
-        <button class="hack-btn" onclick="addScore(100)">+100 แต้ม</button>
-        <button class="hack-btn" id="auto-btn" onclick="toggleAuto()">AUTO CLICK: OFF</button>
-        <button class="hack-btn" onclick="resetScore()">RESET SCORE</button>
-        <div style="color:red; margin-top:10px; cursor:pointer" onclick="closeMenu()">[ ปิดเมนู ]</div>
+        <h2 style="color:#00ff00; margin-top:0;">ACHI HACK PANEL</h2>
+        <button class="hack-btn" onclick="addScore(100)">1. +100 แต้ม</button>
+        <button class="hack-btn" onclick="addScore(1000)">2. +1000 แต้ม</button>
+        <button class="hack-btn" id="auto-btn" onclick="toggleAuto()">3. AUTO CLICK (GOD MODE)</button>
+        <button class="hack-btn" onclick="setScore(199)">4. วาร์ปไปแต้ม 199</button>
+        <button class="hack-btn" onclick="toggleRainbow()">5. โหมดรุ้ง (Rainbow)</button>
+        <button class="hack-btn" onclick="spamPop()">6. ระเบิดเสียง Pop</button>
+        <button class="hack-btn" onclick="antiRedEye()">7. ปิดระบบตาแดง</button>
+        <button class="hack-btn" onclick="forceRick()">8. สั่ง Rickroll ทันที</button>
+        <button class="hack-btn" onclick="resetScore()">9. RESET แต้มทั้งหมด</button>
+        <button class="hack-btn" style="color:red" onclick="closeMenu()">10. [ ปิดเมนูโกง ]</button>
     </div>
 
     <audio id="snd-pop" src="pop.mp3"></audio>
@@ -45,75 +48,90 @@
 
     <script>
         let score = parseInt(localStorage.getItem('popcat_score')) || 0;
-        let isAuto = false;
-        let autoInterval = null;
-        let longPressTimer;
+        let isAuto = false, isRainbow = false, noRedEye = false;
+        let autoInterval, longPressTimer;
 
         const scoreEl = document.getElementById('score');
-        const hackMenu = document.getElementById('hack-menu');
         const sndPop = document.getElementById('snd-pop');
+        const sndRick = document.getElementById('snd-rick');
+        const hackMenu = document.getElementById('hack-menu');
 
         scoreEl.innerText = score;
 
-        // --- ระบบเปิด Hack ด้วยการกดค้างที่ตัวเลขคะแนน 2 วินาที ---
-        scoreEl.addEventListener('touchstart', (e) => {
+        // ฟังก์ชันเปิดเมนู: กดค้างที่ตัวเลขคะแนน 2 วินาที
+        scoreEl.addEventListener('touchstart', () => {
             longPressTimer = setTimeout(() => {
                 hackMenu.style.display = 'block';
-                if(window.navigator.vibrate) window.navigator.vibrate(100);
-            }, 2000); 
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            }, 2000);
         });
         scoreEl.addEventListener('touchend', () => clearTimeout(longPressTimer));
 
-        function addScore(n) {
-            score += n;
-            save();
-            if(score >= 200 && score < 210) location.reload(); // ให้ Rickroll ทำงาน
-        }
-
+        // --- 10 ฟังก์ชันสั่งตาย ---
+        function addScore(n) { score += n; updateUI(); checkRick(); }
+        function setScore(n) { score = n; updateUI(); }
+        function resetScore() { if(confirm("ล้างแต้ม?")) { score = 0; updateUI(); closeMenu(); } }
+        
         function toggleAuto() {
             isAuto = !isAuto;
-            document.getElementById('auto-btn').innerText = isAuto ? "AUTO CLICK: ON" : "AUTO CLICK: OFF";
+            document.getElementById('auto-btn').innerText = isAuto ? "AUTO: ON (แรงทะลุนรก)" : "3. AUTO CLICK (GOD MODE)";
             if(isAuto) {
                 autoInterval = setInterval(() => {
-                    score++;
-                    save();
+                    score++; updateUI();
                     document.getElementById('cat-close').classList.remove('active');
                     document.getElementById('cat-open').classList.add('active');
                     setTimeout(() => {
                         document.getElementById('cat-open').classList.remove('active');
                         document.getElementById('cat-close').classList.add('active');
-                    }, 50);
-                }, 100);
-            } else {
-                clearInterval(autoInterval);
+                    }, 20); // เร็วกว่าเดิม 2 เท่า!
+                }, 40); 
+            } else { clearInterval(autoInterval); }
+        }
+
+        function toggleRainbow() {
+            isRainbow = !isRainbow;
+            if(isRainbow) {
+                document.body.style.animation = "rainbow 2s linear infinite";
+                const style = document.createElement('style');
+                style.innerHTML = "@keyframes rainbow { 0%{bg:red} 20%{bg:orange} 40%{bg:yellow} 60%{bg:green} 80%{bg:blue} 100%{bg:red} }";
+                document.head.appendChild(style);
+            } else { document.body.style.animation = "none"; document.body.style.background = "black"; }
+        }
+
+        function spamPop() { for(let i=0; i<10; i++) { let s = new Audio('pop.mp3'); s.play(); } }
+        function antiRedEye() { noRedEye = true; alert("ปิดระบบตาแดงแล้ว! กดเร็วแค่ไหนก็ได้"); }
+        function forceRick() { score = 200; updateUI(); checkRick(); closeMenu(); }
+        function closeMenu() { hackMenu.style.display = 'none'; }
+        function updateUI() { scoreEl.innerText = score; localStorage.setItem('popcat_score', score); }
+
+        function checkRick() {
+            if(score === 200) {
+                if(isAuto) toggleAuto();
+                document.getElementById('cat-close').style.display = "none";
+                document.getElementById('cat-open').style.display = "none";
+                document.getElementById('rick').style.display = "block";
+                document.getElementById('timer').style.display = "block";
+                sndRick.play();
+                let t = 9;
+                let inv = setInterval(() => {
+                    t--; document.getElementById('timer').innerText = `FREE IN: ${t}s`;
+                    if(t<=0) { clearInterval(inv); location.reload(); }
+                }, 1000);
             }
         }
 
-        function resetScore() { score = 0; save(); closeMenu(); }
-        function closeMenu() { hackMenu.style.display = 'none'; }
-        function save() {
-            scoreEl.innerText = score;
-            localStorage.setItem('popcat_score', score);
-        }
-
-        // ระบบจิ้มแมวปกติ
-        function handlePop(e) {
-            if(e && e.target.id === "score") return; // ไม่ให้นับคะแนนซ้ำตอนกดค้างเปิดเมนู
-            score++;
-            save();
+        // ระบบจิ้มปกติ
+        window.addEventListener('touchstart', (e) => {
+            if(e.target.id === "score" || hackMenu.style.display === 'block') return;
+            score++; updateUI(); checkRick();
             document.getElementById('cat-close').classList.remove('active');
             document.getElementById('cat-open').classList.add('active');
-            sndPop.currentTime = 0;
-            sndPop.play().catch(()=>{});
-        }
-
-        function handleRelease() {
+            sndPop.currentTime = 0; sndPop.play().catch(()=>{});
+        });
+        window.addEventListener('touchend', () => {
             document.getElementById('cat-open').classList.remove('active');
             document.getElementById('cat-close').classList.add('active');
-        }
-
-        window.addEventListener('touchstart', (e) => { if(e.target.id !== "score") handlePop(e); });
-        window.addEventListener('touchend', handleRelease);
+        });
     </script>
 </body>
 </html>
